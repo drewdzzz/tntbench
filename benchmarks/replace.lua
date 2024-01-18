@@ -55,7 +55,6 @@ local function bench(cfg)
 end
 
 local m = {}
-m.cfg = cfg
 m.init = init
 m.free = free
 m.bench = bench
