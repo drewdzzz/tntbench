@@ -3,6 +3,7 @@ local json = require('json')
 local fiber = require('fiber')
 local os = require('os')
 
+os.execute('rm -rf *.xlog *.snap')
 fiber.set_max_slice(1e4)
 package.path = package.path .. ';./benchmarks/?.lua;'
 json.cfg({encode_invalid_as_nil = true})
@@ -20,6 +21,17 @@ local cfg = {
 }
 
 local ITER_NUM = 5
+
+local function warmup()
+    for _ = 1, ITER_NUM do
+        local s = box.schema.space.create('warmup')
+        s:create_index('pk')
+        for i = 1, 1e6 do
+            s:replace{i}
+        end
+        s:drop()
+    end
+end
 
 local function bench_impl(module, cfg)
     local m = require(module)
@@ -47,6 +59,7 @@ local function bench_impl(module, cfg)
 end
 
 box.cfg{wal_mode='none'}
+warmup()
 
 for _, setup in pairs(cfg) do
     bench_impl(setup[1], setup[2])

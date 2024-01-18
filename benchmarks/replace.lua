@@ -1,3 +1,5 @@
+local has_trigger_names = string.sub(box.info.version, 1, 1) == '3'
+
 local function init(cfg)
     if cfg.tuple_num == nil then
         error('tuple_num is required')
@@ -18,22 +20,31 @@ local function init(cfg)
 	cfg.in_txn = false
     end
 
-    local s = box.schema.create_space('select_bench', cfg.space_opts)
+    local s = box.schema.create_space('replace_bench', cfg.space_opts)
     s:create_index('pk', cfg.index_opts)
+    local name = nil
     for i, trg in ipairs(cfg.on_replace) do
-	s:on_replace(trg, nil, tostring(i))
+        if has_trigger_names then
+            s:on_replace(trg, nil, tostring(i))
+        else
+            s:on_replace(trg, nil)
+        end
     end
     for i, trg in ipairs(cfg.before_replace) do
-	s:before_replace(trg, nil, tostring(i))
+        if has_trigger_names then
+            s:before_replace(trg, nil, tostring(i))
+        else
+            s:before_replace(trg, nil)
+        end
     end
 end
 
 local function free(cfg)
-    box.space.select_bench:drop()
+    box.space.replace_bench:drop()
 end
 
 local function bench(cfg)
-    local s = box.space.select_bench
+    local s = box.space.replace_bench
     if cfg.in_txn then box.begin() end
 
     for i = 1, cfg.tuple_num do
