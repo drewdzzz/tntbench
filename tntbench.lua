@@ -10,6 +10,8 @@ json.cfg({encode_invalid_as_nil = true})
 
 local counter = 0
 local function bump_counter() counter = counter + 1 end
+local iter_counter
+local function exhaust_iter(iter) for _ in iter() do counter = counter + 1 end end
 
 -- Config has a format: Lua-module name and config for it
 local cfg = {
@@ -17,7 +19,16 @@ local cfg = {
     {'replace', {tuple_num = 1e6}},
     {'replace', {tuple_num = 1e6, on_replace = {bump_counter}}},
     {'replace', {tuple_num = 1e6, on_replace = {bump_counter, bump_counter}}},
-    {'replace', {tuple_num = 1e6, on_replace = {bump_counter, bump_counter, bump_counter}}}
+    {'replace', {tuple_num = 1e6, on_replace = {bump_counter, bump_counter, bump_counter}}},
+    {'txn_triggers', {tuple_num = 1e6, trigger_type = 'on_commit', triggers = {
+        exhaust_iter
+    }, description = 'exhaust stmts 1 time'}},
+    {'txn_triggers', {tuple_num = 1e6, trigger_type = 'on_commit', triggers = {
+        exhaust_iter, exhaust_iter
+    }, description = 'exhaust stmts 2 times'}},
+    {'txn_triggers', {tuple_num = 1e6, trigger_type = 'on_commit', triggers = {
+        exhaust_iter, exhaust_iter, exhaust_iter
+    }, description = 'exhaust stmts 3 times'}}
 }
 
 local ITER_NUM = 5
@@ -38,10 +49,10 @@ local function bench_impl(module, cfg)
     local results = {}
     
     for _ = 1, ITER_NUM do
-        m.init(cfg)
-        local t = clock.bench(m.bench, cfg)[1]
+        m:init(cfg)
+        local t = clock.bench(m.bench, m, cfg)[1]
         table.insert(results, t)
-        m.free(cfg)
+        m:free(cfg)
     end
 
     local avg = 0

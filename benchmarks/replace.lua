@@ -1,6 +1,6 @@
 local has_trigger_names = string.sub(box.info.version, 1, 1) == '3'
 
-local function init(cfg)
+local function init(_self, cfg)
     if cfg.tuple_num == nil then
         error('tuple_num is required')
     end
@@ -39,11 +39,11 @@ local function init(cfg)
     end
 end
 
-local function free(cfg)
+local function free(_self, cfg)
     box.space.replace_bench:drop()
 end
 
-local function bench(cfg)
+local function bench(_self, cfg)
     local s = box.space.replace_bench
     if cfg.in_txn then box.begin() end
 

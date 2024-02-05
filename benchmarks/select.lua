@@ -1,4 +1,4 @@
-local function init(cfg)
+local function init(_self, cfg)
     if cfg.tuple_num == nil then
         error('tuple_num is required')
     end
@@ -23,11 +23,11 @@ local function init(cfg)
     end
 end
 
-local function free(cfg)
+local function free(_self, cfg)
     box.space.select_bench:drop()
 end
 
-local function bench(cfg)
+local function bench(_self, cfg)
     local s = box.space.select_bench
     for i = 1, cfg.tuple_num do
         s:select(i)
